@@ -37,14 +37,12 @@ class AuthService {
   Future<void> signup(
       String email, String username, String password, String otp) async {
     try {
-      // Завершаем регистрацию, передавая OTP и другие данные
       final response = await dio.post('/auth/signup', data: {
         'email': email,
         'username': username,
         'password': password,
         'otp': otp,
       });
-
       if (response.statusCode == 200) {
         print('User registered successfully');
       } else {
@@ -77,11 +75,7 @@ class AuthService {
       if (refreshToken != null) {
         final response = await dio.post(
           '/auth/refresh',
-          options: Options(
-            headers: {
-              'Cookie': 'refreshToken=$refreshToken'
-            }, // передаем refresh token через cookies
-          ),
+          options: Options(headers: {'Cookie': 'refreshToken=$refreshToken'}),
         );
         if (response.statusCode == 200) {
           await dioClient.saveAccessToken(response.data['accessToken']);
@@ -100,14 +94,9 @@ class AuthService {
     try {
       final refreshToken = await dioClient.getRefreshToken();
       if (refreshToken != null) {
-        await dio.post(
-          '/auth/logout',
-          options: Options(
-            headers: {
-              'Cookie': 'refreshToken=$refreshToken'
-            }, // передаем refresh token через cookies
-          ),
-        );
+        await dio.post('/auth/logout',
+            options:
+                Options(headers: {'Cookie': 'refreshToken=$refreshToken'}));
         await dioClient.clearTokens();
         print('Logged out successfully');
       }

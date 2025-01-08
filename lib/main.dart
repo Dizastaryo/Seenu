@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:get_it/get_it.dart'; // Импортируем get_it
+import 'package:get_it/get_it.dart';
+import 'package:dio/dio.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
@@ -9,19 +10,20 @@ import 'screens/hearts_screen.dart';
 import 'providers/auth_provider.dart';
 import 'service/auth_service.dart';
 import 'service/dio_client.dart';
-import 'package:dio/dio.dart'; // Импортируем Dio
 
 // Создаем экземпляр GetIt для централизованного управления зависимостями
 final GetIt sl = GetIt.instance;
 
+// Общий базовый URL
+const String baseUrl = 'http://192.168.1.6:8081/api';
+
 void main() {
-  // Настроим все зависимости через get_it
+  // Настройка зависимостей через get_it
   setupDependencies();
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) =>
-          sl<AuthProvider>(), // Извлекаем AuthProvider через get_it
+      create: (context) => sl<AuthProvider>(),
       child: MyApp(),
     ),
   );
@@ -29,8 +31,15 @@ void main() {
 
 // Функция для настройки зависимостей
 void setupDependencies() {
+  // Регистрация Dio
+  sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(milliseconds: 5000),
+        receiveTimeout: const Duration(milliseconds: 3000),
+      )));
+
   // Регистрация DioClient
-  sl.registerLazySingleton<DioClient>(() => DioClient());
+  sl.registerLazySingleton<DioClient>(() => DioClient(sl<Dio>()));
 
   // Регистрация AuthService
   sl.registerLazySingleton<AuthService>(

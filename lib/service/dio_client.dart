@@ -7,20 +7,10 @@ class DioClient {
   final Dio dio;
   final CookieJar cookieJar;
 
-  DioClient()
-      : dio = Dio(BaseOptions(
-          baseUrl: 'http://192.168.1.6:8081/api',
-          connectTimeout: Duration(milliseconds: 5000),
-          receiveTimeout: Duration(milliseconds: 3000),
-        )),
-        cookieJar = CookieJar() {
-    dio.interceptors.add(CookieManager(
-        cookieJar)); // Использование CookieManager для работы с cookies
-    dio.interceptors.add(LogInterceptor(
-        responseBody: true)); // Для логирования запросов и ответов
+  DioClient(this.dio) : cookieJar = CookieJar() {
+    dio.interceptors.add(CookieManager(cookieJar));
+    dio.interceptors.add(LogInterceptor(responseBody: true));
   }
-
-  Dio get client => dio;
 
   Future<String?> getRefreshToken() async {
     final prefs = await SharedPreferences.getInstance();
