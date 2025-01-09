@@ -16,49 +16,53 @@ final GetIt sl = GetIt.instance;
 const String baseUrl = 'http://192.168.1.6:8081/api';
 
 void main() {
-  // Настройка зависимостей через get_it
-  setupDependencies();
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => sl<AuthProvider>(),
-      child: MyApp(),
-    ),
-  );
-}
-
-// Функция для настройки зависимостей
-void setupDependencies() {
-  // Регистрация Dio
-  sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: const Duration(minutes: 5),
-        receiveTimeout: const Duration(minutes: 5),
-      )));
-
-  // Регистрация DioClient
-  sl.registerLazySingleton<DioClient>(() => DioClient(sl<Dio>()));
-
-  // Регистрация AuthService
-  sl.registerLazySingleton<AuthService>(
-      () => AuthService(sl<Dio>(), sl<DioClient>(), sl<CookieJar>()));
-
-  // Регистрация AuthProvider
-  sl.registerLazySingleton<AuthProvider>(
-      () => AuthProvider(sl<DioClient>(), sl<AuthService>()));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  // Метод для асинхронной инициализации зависимостей
+  Future<void> _initializeDependencies() async {
+    await setupDependencies();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Признавашки',
-      theme: _buildThemeData(),
-      initialRoute: '/splash',
-      onGenerateRoute: _onGenerateRoute,
+    return FutureBuilder<void>(
+      future: _initializeDependencies(), // Инициализация зависимостей
+      builder: (context, snapshot) {
+        // Если зависимостей еще нет, показываем экран загрузки
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+
+        // Если произошла ошибка при инициализации, показываем сообщение об ошибке
+        if (snapshot.hasError) {
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(child: Text('Ошибка инициализации зависимостей')),
+            ),
+          );
+        }
+
+        // Когда зависимости инициализированы, запускаем основное приложение
+        return ChangeNotifierProvider(
+          create: (context) => sl<AuthProvider>(), // Инициализация AuthProvider
+          child: MaterialApp(
+            title: 'Признавашки',
+            theme: _buildThemeData(),
+            initialRoute: '/splash',
+            onGenerateRoute: _onGenerateRoute,
+          ),
+        );
+      },
     );
   }
 
+  // Функция для настройки темы
   ThemeData _buildThemeData() {
     return ThemeData(
       primaryColor: const Color(0xFF6C9942),
@@ -77,6 +81,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
+  // Функция для обработки маршрутов
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/splash':
@@ -94,4 +99,25 @@ class MyApp extends StatelessWidget {
         return null;
     }
   }
+}
+
+// Функция для настройки зависимостей
+Future<void> setupDependencies() async {
+  // Регистрация Dio
+  sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(minutes: 5),
+        receiveTimeout: const Duration(minutes: 5),
+      )));
+
+  // Регистрация DioClient
+  sl.registerLazySingleton<DioClient>(() => DioClient(sl<Dio>()));
+
+  // Регистрация AuthService
+  sl.registerLazySingleton<AuthService>(
+      () => AuthService(sl<Dio>(), sl<DioClient>(), sl<CookieJar>()));
+
+  // Регистрация AuthProvider
+  sl.registerLazySingleton<AuthProvider>(
+      () => AuthProvider(sl<DioClient>(), sl<AuthService>()));
 }
