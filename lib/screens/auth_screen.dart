@@ -18,7 +18,7 @@ class _AuthScreenState extends State<AuthScreen>
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
+  bool _isOtpVerified = false;
   bool _isOtpSent = false;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -100,6 +100,7 @@ class _AuthScreenState extends State<AuthScreen>
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
+            // Поле ввода email
             _buildTextField(
               labelText: 'Email',
               icon: Icons.email_outlined,
@@ -115,14 +116,8 @@ class _AuthScreenState extends State<AuthScreen>
               },
             ),
             const SizedBox(height: 20),
-            if (_isOtpSent)
-              _buildTextField(
-                labelText: 'Введите OTP код',
-                icon: Icons.sms_outlined,
-                controller: _otpController,
-                validator: (value) =>
-                    value != null && value.isEmpty ? 'Введите код' : null,
-              ),
+
+            // Логика отображения формы в зависимости от этапа
             if (!_isOtpSent)
               _buildActionButton(
                 "Отправить OTP код",
@@ -142,50 +137,111 @@ class _AuthScreenState extends State<AuthScreen>
                   }
                 },
               ),
+
             if (_isOtpSent)
-              _buildTextField(
-                labelText: 'Пароль',
-                icon: Icons.lock,
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                toggleVisibility: () {
-                  setState(() => _isPasswordVisible = !_isPasswordVisible);
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Введите пароль';
-                  }
-                  if (value.length < 6) {
-                    return 'Пароль должен быть не менее 6 символов';
-                  }
-                  return null;
-                },
+              Column(
+                children: [
+                  // Поле ввода OTP
+                  _buildTextField(
+                    labelText: 'Введите OTP код',
+                    icon: Icons.sms_outlined,
+                    controller: _otpController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Введите код';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildActionButton(
+                    "Проверить OTP",
+                    () async {
+                      if (_formKeyRegister.currentState?.validate() ?? false) {
+                        setState(() => _isLoading = true);
+                        try {
+                          await Provider.of<AuthProvider>(context,
+                                  listen: false)
+                              .verifyOtp(
+                            _emailController.text.trim(),
+                            _otpController.text.trim(),
+                          );
+                          setState(() => _isOtpVerified = true);
+                          _showSnackBar("OTP успешно проверен");
+                        } catch (e) {
+                          _showSnackBar("Ошибка: ${e.toString()}");
+                        } finally {
+                          setState(() => _isLoading = false);
+                        }
+                      }
+                    },
+                  ),
+                ],
               ),
-            if (_isOtpSent)
-              _buildActionButton(
-                "Завершить регистрацию",
-                () async {
-                  if (_formKeyRegister.currentState?.validate() ?? false) {
-                    setState(() => _isLoading = true);
-                    try {
-                      await Provider.of<AuthProvider>(context, listen: false)
-                          .verifyOtp(_emailController.text.trim(),
-                              _otpController.text.trim());
-                      await Provider.of<AuthProvider>(context, listen: false)
-                          .signup(
-                        _emailController.text.trim(),
-                        'user', // Using a static username or collect it from user if needed
-                        _passwordController.text.trim(),
-                        _otpController.text.trim(),
-                      );
-                      Navigator.pushReplacementNamed(context, '/main');
-                    } catch (e) {
-                      _showSnackBar("Ошибка: ${e.toString()}");
-                    } finally {
-                      setState(() => _isLoading = false);
-                    }
-                  }
-                },
+
+            if (_isOtpVerified)
+              Column(
+                children: [
+                  // Поле ввода логина
+                  _buildTextField(
+                    labelText: 'Логин',
+                    icon: Icons.person_outline,
+                    controller: TextEditingController(), // Добавьте управление
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Введите логин';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Поле ввода пароля
+                  _buildTextField(
+                    labelText: 'Пароль',
+                    icon: Icons.lock,
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    toggleVisibility: () {
+                      setState(() => _isPasswordVisible = !_isPasswordVisible);
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Введите пароль';
+                      }
+                      if (value.length < 6) {
+                        return 'Пароль должен быть не менее 6 символов';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildActionButton(
+                    "Завершить регистрацию",
+                    () async {
+                      if (_formKeyRegister.currentState?.validate() ?? false) {
+                        setState(() => _isLoading = true);
+                        try {
+                          await Provider.of<AuthProvider>(context,
+                                  listen: false)
+                              .signup(
+                            _emailController.text.trim(),
+                            'user', // Здесь можно добавить ввод имени пользователя
+                            _passwordController.text.trim(),
+                            _otpController.text.trim(),
+                          );
+                          Navigator.pushReplacementNamed(context, '/main');
+                        } catch (e) {
+                          _showSnackBar("Ошибка: ${e.toString()}");
+                        } finally {
+                          setState(() => _isLoading = false);
+                        }
+                      }
+                    },
+                  ),
+                ],
               ),
           ],
         ),
