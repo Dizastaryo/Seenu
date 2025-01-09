@@ -34,8 +34,8 @@ void setupDependencies() {
   // Регистрация Dio
   sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(milliseconds: 5000),
-        receiveTimeout: const Duration(milliseconds: 3000),
+        connectTimeout: const Duration(minutes: 5),
+        receiveTimeout: const Duration(minutes: 5),
       )));
 
   // Регистрация DioClient
