@@ -75,7 +75,7 @@ class AuthService {
         final refreshTokenCookie = cookies.firstWhere(
           (cookie) => cookie.name == 'refreshToken',
         );
-        if (refreshTokenCookie != null) {
+        if (refreshTokenCookie.name.isNotEmpty) {
           // Сохраняем refresh token
           await dioClient.saveRefreshToken(refreshTokenCookie.value);
         } else {
