@@ -12,10 +12,7 @@ import 'providers/auth_provider.dart';
 import 'service/auth_service.dart';
 import 'service/dio_client.dart';
 
-// Создаем экземпляр GetIt для централизованного управления зависимостями
 final GetIt sl = GetIt.instance;
-
-// Общий базовый URL
 const String baseUrl = 'http://192.168.1.6:8081/api';
 
 void main() {
@@ -83,37 +80,18 @@ class MyApp extends StatelessWidget {
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/splash':
-        return _createScalePageRoute(SplashScreen());
+        return MaterialPageRoute(builder: (context) => SplashScreen());
       case '/auth':
-        return _createScalePageRoute(const AuthScreen());
+        return MaterialPageRoute(builder: (context) => const AuthScreen());
       case '/main':
-        return _createScalePageRoute(const HomeScreen());
+        return MaterialPageRoute(builder: (context) => const HomeScreen());
       case '/notifications':
-        return _createScalePageRoute(const NotificationsScreen());
-      case '/my-rentals':
-        return _createScalePageRoute(HeartsScreen());
+        return MaterialPageRoute(
+            builder: (context) => const NotificationsScreen());
+      case '/hearts':
+        return MaterialPageRoute(builder: (context) => HeartsScreen());
       default:
         return null;
     }
-  }
-
-  PageRouteBuilder _createScalePageRoute(Widget page) {
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = 0.0;
-        const end = 1.0;
-        const curve = Curves.easeInOut;
-
-        var tween = Tween<double>(begin: begin, end: end)
-            .chain(CurveTween(curve: curve));
-        var scaleAnimation = animation.drive(tween);
-
-        return ScaleTransition(
-          scale: scaleAnimation,
-          child: child,
-        );
-      },
-    );
   }
 }
