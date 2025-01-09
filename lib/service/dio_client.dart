@@ -12,6 +12,16 @@ class DioClient {
     dio.interceptors.add(LogInterceptor(responseBody: true));
   }
 
+  Future<String?> getAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('accessToken');
+  }
+
+  Future<void> saveAccessToken(String accessToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('accessToken', accessToken);
+  }
+
   Future<String?> getRefreshToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('refreshToken');
@@ -22,19 +32,9 @@ class DioClient {
     await prefs.setString('refreshToken', refreshToken);
   }
 
-  Future<void> saveAccessToken(String accessToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('accessToken', accessToken);
-  }
-
-  Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('accessToken');
-  }
-
   Future<void> clearTokens() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('refreshToken');
     await prefs.remove('accessToken');
+    await prefs.remove('refreshToken');
   }
 }

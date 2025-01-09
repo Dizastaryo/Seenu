@@ -7,6 +7,7 @@ import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/hearts_screen.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'providers/auth_provider.dart';
 import 'service/auth_service.dart';
 import 'service/dio_client.dart';
@@ -43,7 +44,7 @@ void setupDependencies() {
 
   // Регистрация AuthService
   sl.registerLazySingleton<AuthService>(
-      () => AuthService(sl<Dio>(), sl<DioClient>()));
+      () => AuthService(sl<Dio>(), sl<DioClient>(), sl<CookieJar>()));
 
   // Регистрация AuthProvider
   sl.registerLazySingleton<AuthProvider>(
