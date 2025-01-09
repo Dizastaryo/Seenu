@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 import '../providers/auth_provider.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({Key? key}) : super(key: key);
 
   @override
   _AuthScreenState createState() => _AuthScreenState();
@@ -18,9 +18,8 @@ class _AuthScreenState extends State<AuthScreen>
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _isOtpVerified = false;
-  bool _isOtpSent = false;
-  bool _isLoading = false;
+  final TextEditingController _loginController = TextEditingController();
+
   bool _isPasswordVisible = false;
   late TabController _tabController;
 
@@ -94,158 +93,139 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Widget _buildRegisterTab() {
-    return Form(
-      key: _formKeyRegister,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Поле ввода email
-            _buildTextField(
-              labelText: 'Email',
-              icon: Icons.email_outlined,
-              controller: _emailController,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Введите email';
-                }
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                  return 'Введите корректный email';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-
-            // Логика отображения формы в зависимости от этапа
-            if (!_isOtpSent)
-              _buildActionButton(
-                "Отправить OTP код",
-                () async {
-                  if (_formKeyRegister.currentState?.validate() ?? false) {
-                    setState(() => _isLoading = true);
-                    try {
-                      await Provider.of<AuthProvider>(context, listen: false)
-                          .sendOtp(_emailController.text.trim());
-                      setState(() => _isOtpSent = true);
-                      _showSnackBar("OTP код отправлен на ваш email");
-                    } catch (e) {
-                      _showSnackBar("Ошибка: ${e.toString()}");
-                    } finally {
-                      setState(() => _isLoading = false);
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Form(
+          key: _formKeyRegister,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _buildTextField(
+                  labelText: 'Email',
+                  icon: Icons.email_outlined,
+                  controller: _emailController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Введите email';
                     }
-                  }
-                },
-              ),
-
-            if (_isOtpSent)
-              Column(
-                children: [
-                  // Поле ввода OTP
-                  _buildTextField(
-                    labelText: 'Введите OTP код',
-                    icon: Icons.sms_outlined,
-                    controller: _otpController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите код';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Введите корректный email';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                if (!authProvider.isOtpSent)
                   _buildActionButton(
-                    "Проверить OTP",
+                    "Отправить OTP код",
                     () async {
                       if (_formKeyRegister.currentState?.validate() ?? false) {
-                        setState(() => _isLoading = true);
                         try {
-                          await Provider.of<AuthProvider>(context,
-                                  listen: false)
-                              .verifyOtp(
-                            _emailController.text.trim(),
-                            _otpController.text.trim(),
-                          );
-                          setState(() => _isOtpVerified = true);
-                          _showSnackBar("OTP успешно проверен");
+                          await authProvider
+                              .sendOtp(_emailController.text.trim());
+                          _showSnackBar("OTP код отправлен на ваш email");
                         } catch (e) {
                           _showSnackBar("Ошибка: ${e.toString()}");
-                        } finally {
-                          setState(() => _isLoading = false);
                         }
                       }
                     },
                   ),
-                ],
-              ),
-
-            if (_isOtpVerified)
-              Column(
-                children: [
-                  // Поле ввода логина
-                  _buildTextField(
-                    labelText: 'Логин',
-                    icon: Icons.person_outline,
-                    controller: TextEditingController(), // Добавьте управление
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите логин';
-                      }
-                      return null;
-                    },
+                if (authProvider.isOtpSent)
+                  Column(
+                    children: [
+                      _buildTextField(
+                        labelText: 'Введите OTP код',
+                        icon: Icons.sms_outlined,
+                        controller: _otpController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите код';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildActionButton(
+                        "Проверить OTP",
+                        () async {
+                          if (_formKeyRegister.currentState?.validate() ??
+                              false) {
+                            try {
+                              await authProvider.verifyOtp(
+                                _emailController.text.trim(),
+                                _otpController.text.trim(),
+                              );
+                              _showSnackBar("OTP успешно проверен");
+                            } catch (e) {
+                              _showSnackBar("Ошибка: ${e.toString()}");
+                            }
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-
-                  // Поле ввода пароля
-                  _buildTextField(
-                    labelText: 'Пароль',
-                    icon: Icons.lock,
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    toggleVisibility: () {
-                      setState(() => _isPasswordVisible = !_isPasswordVisible);
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите пароль';
-                      }
-                      if (value.length < 6) {
-                        return 'Пароль должен быть не менее 6 символов';
-                      }
-                      return null;
-                    },
+                if (authProvider.isOtpVerified)
+                  Column(
+                    children: [
+                      _buildTextField(
+                        labelText: 'Логин',
+                        icon: Icons.person_outline,
+                        controller: _loginController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите логин';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        labelText: 'Пароль',
+                        icon: Icons.lock,
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible,
+                        toggleVisibility: () {
+                          setState(
+                              () => _isPasswordVisible = !_isPasswordVisible);
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите пароль';
+                          }
+                          if (value.length < 6) {
+                            return 'Пароль должен быть не менее 6 символов';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildActionButton(
+                        "Завершить регистрацию",
+                        () async {
+                          if (_formKeyRegister.currentState?.validate() ??
+                              false) {
+                            try {
+                              await authProvider.signup(
+                                _emailController.text.trim(),
+                                _loginController.text.trim(),
+                                _passwordController.text.trim(),
+                                _otpController.text.trim(),
+                              );
+                              Navigator.pushReplacementNamed(context, '/main');
+                            } catch (e) {
+                              _showSnackBar("Ошибка: ${e.toString()}");
+                            }
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-
-                  _buildActionButton(
-                    "Завершить регистрацию",
-                    () async {
-                      if (_formKeyRegister.currentState?.validate() ?? false) {
-                        setState(() => _isLoading = true);
-                        try {
-                          await Provider.of<AuthProvider>(context,
-                                  listen: false)
-                              .signup(
-                            _emailController.text.trim(),
-                            'user', // Здесь можно добавить ввод имени пользователя
-                            _passwordController.text.trim(),
-                            _otpController.text.trim(),
-                          );
-                          Navigator.pushReplacementNamed(context, '/main');
-                        } catch (e) {
-                          _showSnackBar("Ошибка: ${e.toString()}");
-                        } finally {
-                          setState(() => _isLoading = false);
-                        }
-                      }
-                    },
-                  ),
-                ],
-              ),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -257,15 +237,12 @@ class _AuthScreenState extends State<AuthScreen>
         child: Column(
           children: [
             _buildTextField(
-              labelText: 'Email',
-              icon: Icons.email,
-              controller: _emailController,
+              labelText: 'Логин',
+              icon: Icons.person_outline,
+              controller: _loginController,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Введите email';
-                }
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                  return 'Введите корректный email';
+                  return 'Введите логин';
                 }
                 return null;
               },
@@ -294,16 +271,15 @@ class _AuthScreenState extends State<AuthScreen>
               "Войти",
               () async {
                 if (_formKeyLogin.currentState?.validate() ?? false) {
-                  setState(() => _isLoading = true);
                   try {
                     await Provider.of<AuthProvider>(context, listen: false)
-                        .login(_emailController.text.trim(),
-                            _passwordController.text.trim());
+                        .login(
+                      _loginController.text.trim(),
+                      _passwordController.text.trim(),
+                    );
                     Navigator.pushReplacementNamed(context, '/main');
                   } catch (e) {
                     _showSnackBar("Ошибка: ${e.toString()}");
-                  } finally {
-                    setState(() => _isLoading = false);
                   }
                 }
               },
@@ -375,17 +351,39 @@ class _AuthScreenState extends State<AuthScreen>
               ),
             ],
           ),
-          if (_isLoading)
-            Center(
-              child: Lottie.asset(
-                'assets/animation/loading_animation.json',
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
-            ),
+          Consumer<AuthProvider>(
+            builder: (context, authProvider, child) {
+              if (authProvider.isLoading) {
+                return Center(
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Lottie.asset(
+                      'assets/animations/loading_animation.json',
+                    ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
+          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _otpController.dispose();
+    _passwordController.dispose();
+    _loginController.dispose();
+    _tabController.dispose();
+    super.dispose();
   }
 }
