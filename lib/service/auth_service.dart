@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'dio_client.dart';
 
 class AuthService {
@@ -7,7 +8,10 @@ class AuthService {
   final DioClient dioClient;
   final CookieJar cookieJar;
 
-  AuthService(this.dio, this.dioClient, this.cookieJar);
+  AuthService(this.dio, this.dioClient, this.cookieJar) {
+    // Подключаем менеджер куки
+    dio.interceptors.add(CookieManager(cookieJar));
+  }
 
   Future<void> sendOtp(String email) async {
     try {
@@ -57,8 +61,10 @@ class AuthService {
 
   Future<void> login(String username, String password) async {
     try {
-      final response = await dio.post('/auth/signin',
-          data: {'username': username, 'password': password});
+      final response = await dio.post(
+        '/auth/signin',
+        data: {'username': username, 'password': password},
+      );
       if (response.statusCode == 200) {
         final data = response.data;
 
@@ -67,20 +73,21 @@ class AuthService {
 
         // Извлекаем куки через cookieJar
         final cookies = await cookieJar
-            .loadForRequest(Uri.parse('${dio.options.baseUrl}/auth/signin'));
+            .loadForRequest(Uri.parse(dio.options.baseUrl + '/auth/signin'));
+
         if (cookies.isEmpty) {
           throw Exception('Куки не найдены после логина');
         }
 
         final refreshTokenCookie = cookies.firstWhere(
           (cookie) => cookie.name == 'refreshToken',
+          orElse: () => throw Exception('Отсутствует refresh token в куки'),
         );
-        if (refreshTokenCookie.name.isNotEmpty) {
-          // Сохраняем refresh token
-          await dioClient.saveRefreshToken(refreshTokenCookie.value);
-        } else {
-          throw Exception('Отсутствует refresh token в куки');
-        }
+
+        // Сохраняем refresh token
+        await dioClient.saveRefreshToken(refreshTokenCookie.value);
+
+        print('Логин успешен: Access Token сохранен.');
       } else {
         throw Exception('Ошибка при логине: ${response.data}');
       }
@@ -91,13 +98,11 @@ class AuthService {
 
   Future<void> refreshAccessToken() async {
     try {
-      // Получаем refresh token из dioClient (если он уже сохранён)
       final refreshToken = await dioClient.getRefreshToken();
       if (refreshToken == null) {
         throw Exception('Нет доступного refresh токена');
       }
 
-      // Отправляем запрос на обновление токена
       final response = await dio.post(
         '/auth/refresh',
         options: Options(headers: {'Cookie': 'refreshToken=$refreshToken'}),
@@ -116,19 +121,14 @@ class AuthService {
 
   Future<void> logout() async {
     try {
-      // Получаем refresh token из dioClient (если он уже сохранён)
       final refreshToken = await dioClient.getRefreshToken();
       if (refreshToken == null) {
         throw Exception('Нет refresh токена для выхода');
       }
-
-      // Отправляем запрос на выход
-      await dio.post('/auth/logout',
-          options: Options(headers: {
-            'Cookie': 'refreshToken=$refreshToken',
-          }));
-
-      // Очищаем все токены
+      await dio.post(
+        '/auth/logout',
+        options: Options(headers: {'Cookie': 'refreshToken=$refreshToken'}),
+      );
       await dioClient.clearTokens();
       print('Выход выполнен успешно');
     } catch (e) {
