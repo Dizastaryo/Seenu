@@ -110,6 +110,9 @@ Future<void> setupDependencies() async {
         receiveTimeout: const Duration(minutes: 5),
       )));
 
+  // Регистрация CookieJar
+  sl.registerLazySingleton<CookieJar>(() => CookieJar());
+
   // Регистрация DioClient
   sl.registerLazySingleton<DioClient>(() => DioClient(sl<Dio>()));
 
