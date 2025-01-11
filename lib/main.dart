@@ -86,10 +86,10 @@ class MyApp extends StatelessWidget {
     switch (settings.name) {
       case '/splash':
         return MaterialPageRoute(builder: (context) => SplashScreen());
-      case '/auth':
-        return MaterialPageRoute(builder: (context) => const AuthScreen());
       case '/main':
         return MaterialPageRoute(builder: (context) => const HomeScreen());
+      case '/auth':
+        return MaterialPageRoute(builder: (context) => const AuthScreen());
       case '/notifications':
         return MaterialPageRoute(
             builder: (context) => const NotificationsScreen());

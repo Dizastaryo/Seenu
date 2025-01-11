@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:senu/screens/auth_screen.dart';
+import 'package:senu/screens/home_screen.dart';
 import 'package:video_player/video_player.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // Переход на второй экран после завершения видео
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => AuthScreen()),
+      MaterialPageRoute(builder: (context) => HomeScreen()),
     );
   }
 

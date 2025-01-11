@@ -21,14 +21,13 @@ class _ScanScreenState extends State<ScanScreen> {
   Future<bool> _checkPermissionsAndBluetooth() async {
     String errorMessage = '';
 
-    // Проверяем разрешения на Bluetooth и геолокацию
-    if (await Permission.bluetoothScan.isDenied ||
-        await Permission.bluetoothConnect.isDenied ||
-        await Permission.location.isDenied) {
-      final status = await Permission.bluetoothScan.request();
-      if (status != PermissionStatus.granted) {
-        errorMessage = 'Bluetooth and Location permissions are required.';
-      }
+    // Запрашиваем разрешения на Bluetooth и геолокацию
+    PermissionStatus bluetoothStatus = await Permission.bluetoothScan.request();
+    PermissionStatus locationStatus = await Permission.location.request();
+
+    // Если Bluetooth или геолокация не разрешены, показываем сообщение об ошибке
+    if (bluetoothStatus.isDenied || locationStatus.isDenied) {
+      errorMessage = 'Bluetooth and Location permissions are required.';
     }
 
     // Проверяем, включён ли Bluetooth
