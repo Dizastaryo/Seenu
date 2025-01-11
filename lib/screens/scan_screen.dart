@@ -3,39 +3,50 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class ScanScreen extends StatefulWidget {
   @override
-  _ScanScreenState createState() => _BluetoothScanPageState();
+  _ScanScreenState createState() => _ScanScreenState();
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  final FlutterBluePlus _flutterBlue = FlutterBluePlus.instance;
-  final Map<String, ScanResult> _foundDevices = {};
+  final List<String> _foundDevices = []; // Список только имен устройств
   bool _isScanning = false;
 
   @override
   void initState() {
     super.initState();
-    _startScan();
   }
 
-  void _startScan() {
+  // Запуск сканирования
+  void _startScan() async {
     setState(() {
       _isScanning = true;
+      _foundDevices.clear(); // Очищаем список перед новым сканированием
     });
 
-    _flutterBlue.scan(allowDuplicates: true).listen((scanResult) {
-      setState(() {
-        _foundDevices[scanResult.device.id.id] = scanResult;
+    try {
+      await FlutterBluePlus.startScan(timeout: Duration(seconds: 10));
+      FlutterBluePlus.scanResults.listen((results) {
+        setState(() {
+          // Добавляем только имена устройств
+          for (var result in results) {
+            if (result.device.name.isNotEmpty &&
+                !_foundDevices.contains(result.device.name)) {
+              _foundDevices.add(result.device.name);
+            }
+          }
+        });
       });
-    }, onError: (error) {
+    } catch (error) {
+      debugPrint('Scan error: $error');
+    } finally {
       setState(() {
         _isScanning = false;
       });
-      debugPrint('Scan error: $error');
-    });
+    }
   }
 
+  // Остановка сканирования
   void _stopScan() {
-    _flutterBlue.stopScan();
+    FlutterBluePlus.stopScan();
     setState(() {
       _isScanning = false;
     });
@@ -43,7 +54,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   void dispose() {
-    _flutterBlue.stopScan();
+    FlutterBluePlus.stopScan();
     super.dispose();
   }
 
@@ -75,13 +86,10 @@ class _ScanScreenState extends State<ScanScreen> {
             ),
           Expanded(
             child: ListView(
-              children: _foundDevices.values.map((result) {
+              children: _foundDevices.map((deviceName) {
                 return ListTile(
-                  title: Text(result.device.name.isNotEmpty
-                      ? result.device.name
-                      : 'Unknown Device'),
-                  subtitle: Text(result.device.id.id),
-                  trailing: Text('${result.rssi} dBm'),
+                  title: Text(
+                      deviceName.isNotEmpty ? deviceName : 'Unknown Device'),
                 );
               }).toList(),
             ),
