@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:lottie/lottie.dart';
 
 class ScanScreen extends StatefulWidget {
   @override
@@ -8,7 +9,7 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  final List<String> _foundDevices = [];
+  final List<ScanResult> _foundDevices = []; // Храним объекты ScanResult
   bool _isScanning = false;
 
   @override
@@ -72,23 +73,15 @@ class _ScanScreenState extends State<ScanScreen> {
     });
 
     try {
-      await FlutterBluePlus.startScan(timeout: Duration(seconds: 10));
+      await FlutterBluePlus.startScan();
       FlutterBluePlus.scanResults.listen((results) {
         setState(() {
-          for (var result in results) {
-            if (result.device.name.isNotEmpty &&
-                !_foundDevices.contains(result.device.name)) {
-              _foundDevices.add(result.device.name);
-            }
-          }
+          // Добавляем все устройства, не проверяя имя
+          _foundDevices.addAll(results);
         });
       });
     } catch (error) {
       debugPrint('Scan error: $error');
-    } finally {
-      setState(() {
-        _isScanning = false;
-      });
     }
   }
 
@@ -114,20 +107,32 @@ class _ScanScreenState extends State<ScanScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
+                  Container(
+                    height: 100,
+                    width: 100,
+                    child: Lottie.asset(
+                      'assets/animation/pixeltated-heart.json', // Анимация во время поиска
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                   SizedBox(width: 16),
-                  Text('Scanning...'),
+                  Text('Scanning...', style: TextStyle(fontSize: 18)),
                 ],
               ),
             ),
           Expanded(
-            child: ListView(
-              children: _foundDevices.map((deviceName) {
+            child: ListView.builder(
+              itemCount: _foundDevices.length,
+              itemBuilder: (context, index) {
+                var device = _foundDevices[index].device;
                 return ListTile(
+                  leading: Icon(Icons.person), // Иконка человека
                   title: Text(
-                      deviceName.isNotEmpty ? deviceName : 'Unknown Device'),
+                      device.name.isNotEmpty ? device.name : 'Unknown Device'),
+                  subtitle: Text(
+                      device.id.toString()), // Выводим уникальный ID устройства
                 );
-              }).toList(),
+              },
             ),
           ),
           Padding(

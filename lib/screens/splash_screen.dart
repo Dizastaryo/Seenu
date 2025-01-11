@@ -1,7 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:senu/screens/home_screen.dart';
-import 'package:video_player/video_player.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -9,37 +8,17 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  late VideoPlayerController _controller;
-  bool _isVideoInitialized = false;
-
   @override
   void initState() {
     super.initState();
-    _initializeVideo();
-  }
-
-  void _initializeVideo() {
-    _controller = VideoPlayerController.asset('assets/intro.mp4')
-      ..initialize().then((_) {
-        setState(() {
-          _isVideoInitialized = true; // Видео инициализировано
-        });
-        _controller.play();
-        _controller.setLooping(false);
-
-        // Добавляем задержку перед переходом
-        _controller.addListener(() {
-          if (_controller.value.position == _controller.value.duration) {
-            _navigateToNextScreen();
-          }
-        });
-      }).catchError((error) {
-        print("Ошибка при инициализации видео: $error");
-      });
+    _navigateToNextScreen();
   }
 
   Future<void> _navigateToNextScreen() async {
-    // Переход на второй экран после завершения видео
+    // Задержка перед переходом на следующий экран
+    await Future.delayed(Duration(seconds: 3));
+
+    // Переход на следующий экран
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -47,22 +26,52 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Устанавливаем белый фон на весь экран
-      body: Center(
-        child: _isVideoInitialized
-            ? AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
-              )
-            : CircularProgressIndicator(), // Показываем индикатор загрузки, если видео не инициализировано
+      backgroundColor: Colors.white, // Белый фон
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Lottie-анимция рисования сердца красной чернилой
+          Container(
+            height: 300,
+            width: 300,
+            child: Lottie.asset(
+              'assets/animation/heart-ink-drawing.json', // Используем анимацию сердца, рисующегося с чернилами
+              fit: BoxFit.contain,
+            ),
+          ),
+          SizedBox(height: 20),
+          // Эффект 3D для текста "SeenU" с эффектом чернильных брызг
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [Colors.red, Colors.deepOrange],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds),
+            child: Text(
+              'SeenU',
+              style: TextStyle(
+                fontSize: 60, // Увеличенный размер для акцента
+                fontWeight: FontWeight.bold,
+                fontFamily: 'DancingScript', // Каллиграфический шрифт
+                color: Colors.white, // Белый цвет текста на градиенте
+                shadows: [
+                  Shadow(
+                    offset: Offset(3.0, 3.0),
+                    blurRadius: 6.0,
+                    color: Colors.black.withOpacity(0.6),
+                  ),
+                  Shadow(
+                    offset: Offset(-3.0, -3.0),
+                    blurRadius: 6.0,
+                    color: Colors.black.withOpacity(0.6),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
