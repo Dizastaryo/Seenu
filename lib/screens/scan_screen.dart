@@ -111,7 +111,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     height: 100,
                     width: 100,
                     child: Lottie.asset(
-                      'assets/animation/pixeltated-heart.json', // Анимация во время поиска
+                      'assets/animations/pixelated-heart.json', // Анимация во время поиска
                       fit: BoxFit.contain,
                     ),
                   ),
