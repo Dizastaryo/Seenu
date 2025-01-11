@@ -13,7 +13,7 @@ import 'service/auth_service.dart';
 import 'service/dio_client.dart';
 
 final GetIt sl = GetIt.instance;
-const String baseUrl = 'http://192.168.1.5:8081/api';
+const String baseUrl = 'http://192.168.1.3:8081/api';
 
 void main() {
   runApp(MyApp());
