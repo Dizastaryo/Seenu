@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNextScreen() async {
-    await Future.delayed(Duration(seconds: 10));
+    await Future.delayed(Duration(seconds: 6));
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                     foreground: Paint()
                       ..shader = LinearGradient(
                         colors: [
-                          const Color.fromARGB(255, 190, 2, 2),
+                          const Color.fromARGB(255, 255, 0, 0),
                           const Color.fromARGB(255, 24, 8, 8)
                         ],
                         begin: Alignment.topLeft,

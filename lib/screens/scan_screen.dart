@@ -10,70 +10,74 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> {
   List<WiFiAccessPoint> _wifiSSIDs = [];
   bool _isScanning = false;
-  String _logMessage = "";
+  List<String> _logMessages = [];
 
   @override
   void initState() {
     super.initState();
+    _addLogMessage("Приложение запущено.");
   }
 
   Future<void> _scanWifi() async {
     setState(() {
       _isScanning = true;
-      _logMessage = "Запрос разрешений на местоположение...";
+      _addLogMessage("Инициализация сканирования...");
     });
-    _showLogMessage(_logMessage);
 
-    // Проверка разрешений на местоположение
-    PermissionStatus status = await Permission.location.status;
+    if (await _requestLocationPermission()) {
+      _addLogMessage("Разрешение на местоположение подтверждено.");
+      await _startWifiScan();
+    } else {
+      setState(() {
+        _isScanning = false;
+        _addLogMessage("Разрешение на местоположение отклонено.");
+      });
+    }
+  }
 
-    if (status.isDenied) {
-      // Запрос разрешения на местоположение
-      status = await Permission.location.request();
+  Future<bool> _requestLocationPermission() async {
+    PermissionStatus status = await Permission.locationWhenInUse.status;
+    _addLogMessage("Статус разрешения на местоположение: $status");
+
+    if (status.isDenied || status.isPermanentlyDenied) {
+      status = await Permission.locationWhenInUse.request();
+      _addLogMessage("Запрос разрешения на местоположение: $status");
+
       if (status.isDenied || status.isPermanentlyDenied) {
-        setState(() {
-          _isScanning = false;
-          _logMessage = "Разрешение на местоположение отклонено.";
-        });
-        _showLogMessage(_logMessage);
-        return;
+        _addLogMessage(
+            "Ошибка: Проверьте настройки Info.plist и убедитесь, что необходимые ключи добавлены.");
       }
     }
+    return status.isGranted;
+  }
 
-    setState(() {
-      _logMessage = "Разрешение на местоположение получено.";
-    });
-    _showLogMessage(_logMessage);
-
-    // Начало сканирования
+  Future<void> _startWifiScan() async {
     try {
       final canStart = await WiFiScan.instance.canStartScan();
+      _addLogMessage("Проверка возможности сканирования: $canStart");
+
       if (canStart != CanStartScan.yes) {
         setState(() {
-          _logMessage = "Невозможно начать сканирование.";
+          _addLogMessage("Сканирование невозможно. Причина: $canStart");
         });
-        _showLogMessage(_logMessage);
         return;
       }
 
       await WiFiScan.instance.startScan();
-      setState(() {
-        _logMessage = "Сканирование начато.";
-      });
-      _showLogMessage(_logMessage);
+      _addLogMessage("Сканирование начато.");
 
-      // Получение результатов сканирования
       final results = await WiFiScan.instance.getScannedResults();
+      _addLogMessage("Получение результатов сканирования...");
+
       setState(() {
         _wifiSSIDs = results;
-        _logMessage = "Найдено ${_wifiSSIDs.length} сетей Wi-Fi.";
+        _addLogMessage(
+            "Сканирование завершено. Найдено ${_wifiSSIDs.length} сетей.");
       });
-      _showLogMessage(_logMessage);
     } catch (e) {
       setState(() {
-        _logMessage = 'Ошибка при сканировании Wi-Fi: $e';
+        _addLogMessage('Ошибка при сканировании: $e');
       });
-      _showLogMessage(_logMessage);
     } finally {
       setState(() {
         _isScanning = false;
@@ -81,10 +85,11 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  // Функция для отображения лога
-  void _showLogMessage(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+  void _addLogMessage(String message) {
+    print(message); // Вывод в консоль для отладки
+    setState(() {
+      _logMessages.add(message);
+    });
   }
 
   @override
@@ -93,17 +98,33 @@ class _ScanScreenState extends State<ScanScreen> {
       appBar: AppBar(
         title: const Text('Wi-Fi Scanner'),
       ),
-      body: Center(
-        child: _isScanning
-            ? CircularProgressIndicator()
-            : ListView.builder(
-                itemCount: _wifiSSIDs.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(_wifiSSIDs[index].ssid),
-                  );
-                },
-              ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: _isScanning
+                  ? CircularProgressIndicator()
+                  : ListView.builder(
+                      itemCount: _wifiSSIDs.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(_wifiSSIDs[index].ssid),
+                        );
+                      },
+                    ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _logMessages.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_logMessages[index]),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _isScanning ? null : _scanWifi,
