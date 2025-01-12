@@ -36,11 +36,11 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<bool> _requestLocationPermission() async {
-    PermissionStatus status = await Permission.locationWhenInUse.status;
+    PermissionStatus status = await Permission.location.status;
     _addLogMessage("Статус разрешения на местоположение: $status");
 
     if (status.isDenied || status.isPermanentlyDenied) {
-      status = await Permission.locationWhenInUse.request();
+      status = await Permission.location.request();
       _addLogMessage("Запрос разрешения на местоположение: $status");
 
       if (status.isDenied || status.isPermanentlyDenied) {
