@@ -17,7 +17,6 @@ class _ScanScreenState extends State<ScanScreen> {
     super.initState();
   }
 
-  // Функция для обработки сканирования Wi-Fi
   Future<void> _scanWifi() async {
     setState(() {
       _isScanning = true;
@@ -26,10 +25,12 @@ class _ScanScreenState extends State<ScanScreen> {
     _showLogMessage(_logMessage);
 
     // Проверка разрешений на местоположение
-    var status = await Permission.location.status;
-    if (!status.isGranted) {
+    PermissionStatus status = await Permission.location.status;
+
+    if (status.isDenied) {
+      // Запрос разрешения на местоположение
       status = await Permission.location.request();
-      if (!status.isGranted) {
+      if (status.isDenied || status.isPermanentlyDenied) {
         setState(() {
           _isScanning = false;
           _logMessage = "Разрешение на местоположение отклонено.";
