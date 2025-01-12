@@ -53,7 +53,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 .toList();
           });
         },
-        child: Icon(Icons.wifi),
+        child: Icon(Icons.search),
       ),
     );
   }
