@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNextScreen() async {
-    await Future.delayed(Duration(seconds: 3));
+    await Future.delayed(Duration(seconds: 10));
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -51,7 +51,10 @@ class _SplashScreenState extends State<SplashScreen>
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.purpleAccent, Colors.blueAccent],
+                colors: [
+                  const Color.fromARGB(255, 255, 255, 255),
+                  const Color.fromARGB(255, 255, 255, 255)
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -84,7 +87,10 @@ class _SplashScreenState extends State<SplashScreen>
                     fontFamily: 'DancingScript',
                     foreground: Paint()
                       ..shader = LinearGradient(
-                        colors: [Colors.white, Colors.yellow],
+                        colors: [
+                          const Color.fromARGB(255, 190, 2, 2),
+                          const Color.fromARGB(255, 24, 8, 8)
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),

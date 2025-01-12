@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wifi_flutter/wifi_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ScanScreen extends StatefulWidget {
   @override
@@ -28,10 +29,22 @@ class _ScanScreenState extends State<ScanScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          // Check for location permission
+          var status = await Permission.location.status;
+          if (!status.isGranted) {
+            // Request location permission if not granted
+            status = await Permission.location.request();
+            if (!status.isGranted) {
+              // Permission denied, exit the function
+              return;
+            }
+          }
+
           final noPermissions = await WifiFlutter.promptPermissions();
           if (noPermissions) {
             return;
           }
+
           final networks = await WifiFlutter.wifiNetworks;
           setState(() {
             _wifiNetworks = networks
