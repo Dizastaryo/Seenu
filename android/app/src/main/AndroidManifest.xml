@@ -1,14 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Разрешения для работы с Bluetooth -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    
-    <!-- Разрешения для Android 12+ -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
 
     <application
         android:label="senu"
@@ -43,14 +39,4 @@
             android:value="2" />
     </application>
 
-    <!-- Для работы с Bluetooth и видимостью устройств -->
-    <queries>
-        <!-- Запрос действий для сканирования Bluetooth -->
-        <intent>
-            <action android:name="android.bluetooth.device.action.FOUND" />
-        </intent>
-        <intent>
-            <action android:name="android.bluetooth.adapter.action.REQUEST_ENABLE" />
-        </intent>
-    </queries>
 </manifest>

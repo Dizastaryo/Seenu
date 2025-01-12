@@ -47,8 +47,14 @@
     <true/>
     <!-- Разрешения для работы с Wi-Fi -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Needs access to Wi-Fi information to work</string>
+    <string>Для сканирования Wi-Fi необходимо разрешение на доступ к вашему местоположению.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Для сканирования Wi-Fi необходимо разрешение на доступ к вашему местоположению.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Needs access to Wi-Fi information to work</string>
+    <string>Для сканирования Wi-Fi необходимо разрешение на доступ к вашему местоположению.</string>
+
+    <!-- Разрешения для работы с Bluetooth (для некоторых функций Wi-Fi) -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>We need access to Bluetooth for Wi-Fi operations.</string>
 </dict>
 </plist>
