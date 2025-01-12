@@ -7,18 +7,28 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    )..forward();
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
     _navigateToNextScreen();
   }
 
   Future<void> _navigateToNextScreen() async {
-    // Задержка перед переходом на следующий экран
     await Future.delayed(Duration(seconds: 3));
-
-    // Переход на следующий экран
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -26,50 +36,82 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Белый фон
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Lottie-анимция рисования сердца красной чернилой
+          // Фоновый градиент
           Container(
-            height: 300,
-            width: 300,
-            child: Lottie.asset(
-              'assets/animation/heart-ink-drawing.json', // Используем анимацию сердца, рисующегося с чернилами
-              fit: BoxFit.contain,
-            ),
-          ),
-          SizedBox(height: 20),
-          // Эффект 3D для текста "SeenU" с эффектом чернильных брызг
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [Colors.red, Colors.deepOrange],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: Text(
-              'SeenU',
-              style: TextStyle(
-                fontSize: 60, // Увеличенный размер для акцента
-                fontWeight: FontWeight.bold,
-                fontFamily: 'DancingScript', // Каллиграфический шрифт
-                color: Colors.white, // Белый цвет текста на градиенте
-                shadows: [
-                  Shadow(
-                    offset: Offset(3.0, 3.0),
-                    blurRadius: 6.0,
-                    color: Colors.black.withOpacity(0.6),
-                  ),
-                  Shadow(
-                    offset: Offset(-3.0, -3.0),
-                    blurRadius: 6.0,
-                    color: Colors.black.withOpacity(0.6),
-                  ),
-                ],
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purpleAccent, Colors.blueAccent],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Lottie-анимация
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Container(
+                  height: 250,
+                  width: 250,
+                  child: Lottie.asset(
+                    'assets/animation/hand-love.json',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              SizedBox(height: 30),
+              // Эффектный текст
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Text(
+                  'SeenU',
+                  style: TextStyle(
+                    fontSize: 60,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'DancingScript',
+                    foreground: Paint()
+                      ..shader = LinearGradient(
+                        colors: [Colors.white, Colors.yellow],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
+                    shadows: [
+                      Shadow(
+                        offset: Offset(4.0, 4.0),
+                        blurRadius: 8.0,
+                        color: Colors.black.withOpacity(0.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              // Дополнительный текст
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Text(
+                  'Feel the connection',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
