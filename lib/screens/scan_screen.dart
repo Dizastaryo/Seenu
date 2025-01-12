@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wifi_flutter/wifi_flutter.dart';
+import 'package:wifi_iot/wifi_iot.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -8,7 +8,7 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  List<Widget> _wifiNetworks = [];
+  List<String> _wifiSSIDs = [];
 
   @override
   void initState() {
@@ -23,8 +23,12 @@ class _ScanScreenState extends State<ScanScreen> {
       ),
       body: Center(
         child: ListView.builder(
-          itemBuilder: (context, index) => _wifiNetworks[index],
-          itemCount: _wifiNetworks.length,
+          itemCount: _wifiSSIDs.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(_wifiSSIDs[index]),
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -40,17 +44,15 @@ class _ScanScreenState extends State<ScanScreen> {
             }
           }
 
-          final noPermissions = await WifiFlutter.promptPermissions();
-          if (noPermissions) {
-            return;
-          }
+          // Load available Wi-Fi networks
+          List<WifiNetwork?>? networks = await WiFiForIoTPlugin.loadWifiList();
 
-          final networks = await WifiFlutter.wifiNetworks;
           setState(() {
-            _wifiNetworks = networks
-                .map((network) => Text(
-                    "SSID: ${network.ssid} - Strength: ${network.rssi} - Secure: ${network.isSecure}"))
-                .toList();
+            // Extract only SSID from each network and display it
+            _wifiSSIDs = networks
+                    ?.map((network) => network?.ssid ?? 'Unknown')
+                    .toList() ??
+                [];
           });
         },
         child: Icon(Icons.search),

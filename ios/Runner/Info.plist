@@ -47,6 +47,8 @@
     <true/>
     <!-- Разрешения для работы с Wi-Fi -->
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Мы используем ваше местоположение для поиска Wi-Fi сетей поблизости.</string>
+    <string>Needs access to Wi-Fi information to work</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Needs access to Wi-Fi information to work</string>
 </dict>
 </plist>
