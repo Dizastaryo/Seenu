@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart'; // Import permission_handler package
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -16,60 +15,12 @@ import 'service/dio_client.dart';
 final GetIt sl = GetIt.instance;
 const String baseUrl = 'http://192.168.1.3:8081/api';
 
-void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Ensure Flutter bindings are initialized
-  await _checkLocationPermission(); // Check permission on app start
+void main() {
   runApp(MyApp());
 }
 
-// Function to check and request location permission
-Future<void> _checkLocationPermission() async {
-  // Request location permission
-  PermissionStatus status = await Permission.location.request();
-
-  // If permission is denied, keep asking until granted
-  if (status.isDenied || status.isPermanentlyDenied) {
-    // Show a dialog asking the user to enable location permission
-    bool shouldOpenSettings = await _showPermissionDialog();
-    if (shouldOpenSettings) {
-      openAppSettings(); // Open settings for the user to enable location manually
-    }
-    // Recursively check the permission again after the user is prompted
-    await _checkLocationPermission();
-  }
-}
-
-// Show a dialog asking the user to enable location permission
-Future<bool> _showPermissionDialog() async {
-  return await showDialog<bool>(
-        context: sl.get(),
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Location Permission Required'),
-            content: Text(
-                'We need location access to continue. Please enable it in settings.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-                child: Text('Go to Settings'),
-              ),
-            ],
-          );
-        },
-      ) ??
-      false;
-}
-
 class MyApp extends StatelessWidget {
+  // Метод для асинхронной инициализации зависимостей
   Future<void> _initializeDependencies() async {
     await setupDependencies();
   }
@@ -77,8 +28,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: _initializeDependencies(),
+      future: _initializeDependencies(), // Инициализация зависимостей
       builder: (context, snapshot) {
+        // Если зависимостей еще нет, показываем экран загрузки
         if (snapshot.connectionState == ConnectionState.waiting) {
           return MaterialApp(
             home: Scaffold(
@@ -87,6 +39,7 @@ class MyApp extends StatelessWidget {
           );
         }
 
+        // Если произошла ошибка при инициализации, показываем сообщение об ошибке
         if (snapshot.hasError) {
           return MaterialApp(
             home: Scaffold(
@@ -95,8 +48,9 @@ class MyApp extends StatelessWidget {
           );
         }
 
+        // Когда зависимости инициализированы, запускаем основное приложение
         return ChangeNotifierProvider(
-          create: (context) => sl<AuthProvider>(),
+          create: (context) => sl<AuthProvider>(), // Инициализация AuthProvider
           child: MaterialApp(
             title: 'Признавашки',
             theme: _buildThemeData(),
@@ -108,6 +62,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
+  // Функция для настройки темы
   ThemeData _buildThemeData() {
     return ThemeData(
       primaryColor: const Color(0xFF6C9942),
@@ -126,6 +81,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
+  // Функция для обработки маршрутов
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/splash':
@@ -145,17 +101,26 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// Функция для настройки зависимостей
 Future<void> setupDependencies() async {
+  // Регистрация Dio
   sl.registerLazySingleton<Dio>(() => Dio(BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(minutes: 5),
         receiveTimeout: const Duration(minutes: 5),
       )));
 
+  // Регистрация CookieJar
   sl.registerLazySingleton<CookieJar>(() => CookieJar());
+
+  // Регистрация DioClient
   sl.registerLazySingleton<DioClient>(() => DioClient(sl<Dio>()));
+
+  // Регистрация AuthService
   sl.registerLazySingleton<AuthService>(
       () => AuthService(sl<Dio>(), sl<DioClient>(), sl<CookieJar>()));
+
+  // Регистрация AuthProvider
   sl.registerLazySingleton<AuthProvider>(
       () => AuthProvider(sl<DioClient>(), sl<AuthService>()));
 }

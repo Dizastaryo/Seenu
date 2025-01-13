@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wifi_scan/wifi_scan.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:lottie/lottie.dart';
 
 class ScanScreen extends StatefulWidget {
   @override
@@ -8,87 +9,87 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
-  List<WiFiAccessPoint> _wifiSSIDs = [];
+  final List<ScanResult> _foundDevices = []; // Храним объекты ScanResult
   bool _isScanning = false;
-  List<String> _logMessages = [];
 
   @override
-  void initState() {
-    super.initState();
-    _addLogMessage("Приложение запущено.");
+  void dispose() {
+    FlutterBluePlus.stopScan();
+    super.dispose();
   }
 
-  Future<void> _scanWifi() async {
+  // Проверка разрешений и состояния Bluetooth
+  Future<bool> _checkPermissionsAndBluetooth() async {
+    String errorMessage = '';
+
+    // Запрашиваем разрешения на Bluetooth и геолокацию
+    PermissionStatus bluetoothStatus = await Permission.bluetoothScan.request();
+    PermissionStatus locationStatus = await Permission.location.request();
+
+    // Если Bluetooth или геолокация не разрешены, показываем сообщение об ошибке
+    if (bluetoothStatus.isDenied || locationStatus.isDenied) {
+      errorMessage = 'Bluetooth and Location permissions are required.';
+    }
+
+    // Проверяем, включён ли Bluetooth
+    if (!(await FlutterBluePlus.isOn)) {
+      errorMessage = 'Bluetooth is turned off. Please enable it.';
+    }
+
+    // Если есть ошибки, показать их пользователю
+    if (errorMessage.isNotEmpty) {
+      _showErrorDialog(errorMessage);
+      return false; // Остановить процесс, если есть ошибки
+    }
+
+    return true;
+  }
+
+  // Показывает диалоговое окно с сообщением об ошибке
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Запуск сканирования
+  Future<void> _startScan() async {
+    if (!await _checkPermissionsAndBluetooth())
+      return; // Проверка перед сканированием
+
     setState(() {
       _isScanning = true;
-      _addLogMessage("Инициализация сканирования...");
+      _foundDevices.clear(); // Очищаем список перед новым сканированием
     });
 
-    if (await _requestLocationPermission()) {
-      _addLogMessage("Разрешение на местоположение подтверждено.");
-      await _startWifiScan();
-    } else {
-      setState(() {
-        _isScanning = false;
-        _addLogMessage("Разрешение на местоположение отклонено.");
-      });
-    }
-  }
-
-  Future<bool> _requestLocationPermission() async {
-    PermissionStatus status = await Permission.location.status;
-    _addLogMessage("Статус разрешения на местоположение: $status");
-
-    if (status.isDenied || status.isPermanentlyDenied) {
-      status = await Permission.location.request();
-      _addLogMessage("Запрос разрешения на местоположение: $status");
-
-      if (status.isDenied || status.isPermanentlyDenied) {
-        _addLogMessage(
-            "Ошибка: Проверьте настройки Info.plist и убедитесь, что необходимые ключи добавлены.");
-      }
-    }
-    return status.isGranted;
-  }
-
-  Future<void> _startWifiScan() async {
     try {
-      final canStart = await WiFiScan.instance.canStartScan();
-      _addLogMessage("Проверка возможности сканирования: $canStart");
-
-      if (canStart != CanStartScan.yes) {
+      await FlutterBluePlus.startScan();
+      FlutterBluePlus.scanResults.listen((results) {
         setState(() {
-          _addLogMessage("Сканирование невозможно. Причина: $canStart");
+          // Добавляем все устройства, не проверяя имя
+          _foundDevices.addAll(results);
         });
-        return;
-      }
-
-      await WiFiScan.instance.startScan();
-      _addLogMessage("Сканирование начато.");
-
-      final results = await WiFiScan.instance.getScannedResults();
-      _addLogMessage("Получение результатов сканирования...");
-
-      setState(() {
-        _wifiSSIDs = results;
-        _addLogMessage(
-            "Сканирование завершено. Найдено ${_wifiSSIDs.length} сетей.");
       });
-    } catch (e) {
-      setState(() {
-        _addLogMessage('Ошибка при сканировании: $e');
-      });
-    } finally {
-      setState(() {
-        _isScanning = false;
-      });
+    } catch (error) {
+      debugPrint('Scan error: $error');
     }
   }
 
-  void _addLogMessage(String message) {
-    print(message); // Вывод в консоль для отладки
+  // Остановка сканирования
+  void _stopScan() {
+    FlutterBluePlus.stopScan();
     setState(() {
-      _logMessages.add(message);
+      _isScanning = false;
     });
   }
 
@@ -96,39 +97,66 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Wi-Fi Scanner'),
+        title: Text('Bluetooth Scanner'),
       ),
       body: Column(
         children: [
-          Expanded(
-            child: Center(
-              child: _isScanning
-                  ? CircularProgressIndicator()
-                  : ListView.builder(
-                      itemCount: _wifiSSIDs.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(_wifiSSIDs[index].ssid),
-                        );
-                      },
+          if (_isScanning)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    height: 100,
+                    width: 100,
+                    child: Lottie.asset(
+                      'assets/animations/pixelated-heart.json', // Анимация во время поиска
+                      fit: BoxFit.contain,
                     ),
+                  ),
+                  SizedBox(width: 16),
+                  Text('Scanning...', style: TextStyle(fontSize: 18)),
+                ],
+              ),
             ),
-          ),
           Expanded(
             child: ListView.builder(
-              itemCount: _logMessages.length,
+              itemCount: _foundDevices.length,
               itemBuilder: (context, index) {
+                var device = _foundDevices[index].device;
                 return ListTile(
-                  title: Text(_logMessages[index]),
+                  leading: Icon(Icons.person), // Иконка человека
+                  title: Text(
+                      device.name.isNotEmpty ? device.name : 'Unknown Device'),
+                  subtitle: Text(
+                      device.id.toString()), // Выводим уникальный ID устройства
                 );
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 56),
+                backgroundColor: _isScanning ? Colors.red : Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: Icon(
+                _isScanning ? Icons.stop : Icons.search,
+                color: Colors.white,
+              ),
+              label: Text(
+                _isScanning ? 'Stop Scanning' : 'Start Scanning',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+              onPressed: _isScanning ? _stopScan : _startScan,
+            ),
+          ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _isScanning ? null : _scanWifi,
-        child: Icon(Icons.search),
       ),
     );
   }

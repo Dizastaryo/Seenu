@@ -45,15 +45,18 @@
     <true/>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
-
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Мы используем ваше местоположение для сканирования Wi-Fi.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>Мы используем ваше местоположение для сканирования Wi-Fi даже в фоновом режиме.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Мы используем ваше местоположение для сканирования Wi-Fi.</string>
+    
+    <!-- Добавлено для работы с Bluetooth -->
     <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>Мы используем Bluetooth для работы Wi-Fi сканирования.</string>
-
+    <string>Мы используем Bluetooth для поиска и подключения устройств.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Мы используем Bluetooth для взаимодействия с устройствами.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Мы используем ваше местоположение для поиска Bluetooth-устройств поблизости.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Мы используем ваше местоположение для поиска Bluetooth-устройств поблизости.</string>
+    <!-- Для iOS 14+ -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Мы используем локальную сеть для взаимодействия с Bluetooth-устройствами.</string>
 </dict>
 </plist>
