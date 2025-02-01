@@ -1,174 +1,129 @@
 import 'package:flutter/material.dart';
-import 'package:location/location.dart';
-import 'package:wifi_scan/wifi_scan.dart';
 
 class HeartsScreen extends StatefulWidget {
   @override
   _HeartsScreenState createState() => _HeartsScreenState();
 }
 
-class _HeartsScreenState extends State<HeartsScreen> {
-  final Location location = Location();
-  bool _locationGranted = false;
-  List<WiFiAccessPoint> _wifiList = [];
-  bool _isScanning = false;
-  String _logs = ''; // Переменная для хранения логов
+class _HeartsScreenState extends State<HeartsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  final List<Map<String, String>> anonymousUsers = [
+    {
+      'name': 'Аноним 1',
+      'photo':
+          'https://avatars.mds.yandex.net/i?id=e65f5b18123d8615b3e56a85732b957fdd7146beab23b66b-5754670-images-thumbs&n=13'
+    },
+    {
+      'name': 'Аноним 2',
+      'photo':
+          'https://avatars.mds.yandex.net/i?id=e65f5b18123d8615b3e56a85732b957fdd7146beab23b66b-5754670-images-thumbs&n=13'
+    },
+  ];
+
+  final List<Map<String, String>> nonAnonymousUsers = [
+    {
+      'name': 'Алексей',
+      'photo':
+          'https://workspace.ru/upload/main/b10/id0trmk3kzzzvw18e0hdm56eqxad6c0h/shrek.jpg'
+    },
+    {
+      'name': 'Мария',
+      'photo':
+          'https://workspace.ru/upload/main/b10/id0trmk3kzzzvw18e0hdm56eqxad6c0h/shrek.jpg'
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
-    _initialize();
-  }
-
-  Future<void> _initialize() async {
-    await _checkAndRequestLocationPermission();
-    if (_locationGranted) {
-      await _scanWiFiNetworks();
-    }
-  }
-
-  Future<void> _checkAndRequestLocationPermission() async {
-    bool serviceEnabled;
-    PermissionStatus permissionGranted;
-
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
-        _showErrorDialog('Службы геолокации отключены.');
-        return;
-      }
-    }
-
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        _showErrorDialog('Разрешение на доступ к местоположению отклонено.');
-        return;
-      }
-    }
-
-    setState(() {
-      _locationGranted = true;
-      _logs += 'Разрешение на местоположение получено.\n';
-    });
-  }
-
-  Future<void> _scanWiFiNetworks() async {
-    setState(() {
-      _isScanning = true;
-      _logs += 'Начало сканирования Wi-Fi...\n';
-    });
-
-    try {
-      final canScan = await WiFiScan.instance.canStartScan();
-      if (canScan != CanStartScan.yes) {
-        _showErrorDialog('Сканирование Wi-Fi недоступно: $canScan.');
-        setState(() {
-          _isScanning = false;
-          _logs += 'Сканирование не возможно: $canScan.\n';
-        });
-        return;
-      }
-
-      await WiFiScan.instance.startScan();
-      final results = await WiFiScan.instance.getScannedResults();
-      setState(() {
-        _wifiList = results;
-        _logs += 'Сканирование завершено. Найдено ${results.length} сетей.\n';
-      });
-    } catch (e) {
-      _showErrorDialog('Ошибка сканирования Wi-Fi: $e');
-      setState(() {
-        _logs += 'Ошибка сканирования: $e\n';
-      });
-    } finally {
-      setState(() {
-        _isScanning = false;
-      });
-    }
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Ошибка'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            child: Text('ОК'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-    );
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Hearts Screen'),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: _locationGranted
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.favorite,
-                    color: Colors.red,
-                    size: 100.0,
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Welcome to the Hearts Screen!',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 40),
-                  ElevatedButton(
-                    onPressed: _isScanning ? null : _scanWiFiNetworks,
-                    child: Text(
-                      _isScanning ? 'Сканирование...' : 'Сканировать Wi-Fi',
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  _wifiList.isNotEmpty
-                      ? Expanded(
-                          child: ListView.builder(
-                            itemCount: _wifiList.length,
-                            itemBuilder: (context, index) {
-                              final wifi = _wifiList[index];
-                              return ListTile(
-                                title: Text(wifi.ssid),
-                                subtitle: Text(
-                                  'Сигнал: ${wifi.level} dBm',
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Text('Нет доступных сетей Wi-Fi'),
-                  SizedBox(height: 20),
-                  Text(
-                    'Логи:\n$_logs', // Отображаем логи на экране
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                    textAlign: TextAlign.left,
+      body: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 8,
                   ),
                 ],
-              )
-            : Text(
-                'Ожидание разрешения на доступ к местоположению...',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
               ),
+              child: TabBar(
+                controller: _tabController,
+                labelColor: Colors.green,
+                unselectedLabelColor: Colors.black45,
+                indicatorColor: Colors.green,
+                tabs: [
+                  Tab(
+                    text: 'Анонимно',
+                    icon: Icon(Icons.security_outlined),
+                  ),
+                  Tab(
+                    text: 'Не анонимно',
+                    icon: Icon(Icons.person_outline),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildUserList(anonymousUsers),
+                  _buildUserList(nonAnonymousUsers),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildUserList(List<Map<String, String>> users) {
+    return ListView.builder(
+      itemCount: users.length,
+      itemBuilder: (context, index) {
+        return Card(
+          margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 5,
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+            leading: CircleAvatar(
+              radius: 30,
+              backgroundImage: NetworkImage(users[index]['photo']!),
+              backgroundColor: Colors.grey[200],
+            ),
+            title: Text(
+              users[index]['name']!,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            trailing: Icon(
+              Icons.favorite,
+              color: Colors.redAccent,
+            ),
+          ),
+        );
+      },
     );
   }
 }

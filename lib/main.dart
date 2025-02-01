@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/notifications_screen.dart';
+import 'screens/searsh_user_screen.dart'; // Добавляем импорт экрана поиска
 import 'screens/hearts_screen.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'providers/auth_provider.dart';
@@ -90,11 +90,10 @@ class MyApp extends StatelessWidget {
         return MaterialPageRoute(builder: (context) => const HomeScreen());
       case '/auth':
         return MaterialPageRoute(builder: (context) => const AuthScreen());
-      case '/notifications':
-        return MaterialPageRoute(
-            builder: (context) => const NotificationsScreen());
       case '/hearts':
         return MaterialPageRoute(builder: (context) => HeartsScreen());
+      case '/search_user': // Новый маршрут для экрана поиска
+        return MaterialPageRoute(builder: (context) => SearchUserScreen());
       default:
         return null;
     }

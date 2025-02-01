@@ -5,7 +5,6 @@ import '../providers/auth_provider.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
-
   @override
   _AuthScreenState createState() => _AuthScreenState();
 }
@@ -14,15 +13,12 @@ class _AuthScreenState extends State<AuthScreen>
     with SingleTickerProviderStateMixin {
   final _formKeyRegister = GlobalKey<FormState>();
   final _formKeyLogin = GlobalKey<FormState>();
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _loginController = TextEditingController();
-
   bool _isPasswordVisible = false;
   late TabController _tabController;
-
   @override
   void initState() {
     super.initState();

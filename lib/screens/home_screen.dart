@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'scan_screen.dart'; // Экран "О компании"
 import 'profile_screen.dart'; // Экран профиля
 import 'hearts_screen.dart'; // Экран "Мои аренды"
-import 'notifications_screen.dart'; // Экран уведомлений
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white, // Белый фон для круга
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -41,11 +39,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
+              width: 40, // Указываем размеры круга
+              height: 40,
+              child: ClipOval(
                 child: Image.asset(
                   'assets/amanzat_logo.png',
-                  height: 30,
+                  fit: BoxFit.cover, // Логотип заполняет весь круг
                 ),
               ),
             ),
@@ -62,14 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
+            icon:
+                const Icon(Icons.search, color: Colors.black), // Иконка поиска
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsScreen(),
-                ),
-              );
+              Navigator.pushNamed(
+                  context, '/search_user'); // Используем именованный маршрут
             },
           ),
         ],

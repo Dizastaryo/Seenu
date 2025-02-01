@@ -45,18 +45,5 @@
     <true/>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
-    
-    <!-- Добавлено для работы с Bluetooth -->
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>Мы используем Bluetooth для поиска и подключения устройств.</string>
-    <key>NSBluetoothPeripheralUsageDescription</key>
-    <string>Мы используем Bluetooth для взаимодействия с устройствами.</string>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Мы используем ваше местоположение для поиска Bluetooth-устройств поблизости.</string>
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>Мы используем ваше местоположение для поиска Bluetooth-устройств поблизости.</string>
-    <!-- Для iOS 14+ -->
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>Мы используем локальную сеть для взаимодействия с Bluetooth-устройствами.</string>
 </dict>
 </plist>
